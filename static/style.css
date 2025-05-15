@@ -154,3 +154,65 @@ button:hover {
     color: white;
     border-color: #007bff;
 }
+
+/* 사이드바 기본 상태 (숨김) */
+.sidebar {
+  position: fixed;
+  top: 0; left: 0;
+  width: 450px;
+  height: 100%;
+  background: #ffffff;
+  box-shadow: 2px 0 5px rgba(0,0,0,0.1);
+  transform: translateX(-450px);
+  transition: transform 0.3s ease;
+  z-index: 1000;
+}
+
+/* 사이드바 토글 버튼 */
+#sidebar-toggle {
+  position: absolute;
+  top: 16px;
+  right: -36px;
+  width: 32px;
+  height: 32px;
+  background: #fff;
+  color: #007bff;
+  border: none;
+  border-radius: 4px;
+  font-size: 20px;
+  line-height: 1;
+  cursor: pointer;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+}
+
+/* 사이드바 펼친 상태 */
+.sidebar.open {
+  transform: translateX(0);
+}
+/* 패널(폼) 스타일: 기존 여행 조건 입력창과 유사하게 */
+.panel {
+  background: #fff;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  padding: 16px;
+  margin: 16px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+}
+
+/* 메인 컨텐츠 래퍼 */
+.main-wrapper {
+  margin-left: 0;
+  transition: margin-left 0.3s ease;
+}
+
+/* 사이드바 열리면 본문 밀어내기 */
+.sidebar.open ~ .main-wrapper {
+  margin-left: 450px;
+}
+
+/* 사이드바 내부 스크롤 처리 (입력 폼이 길어질 경우) */
+.sidebar-content {
+  padding: 20px;
+  height: 100%;
+  overflow-y: auto;
+}
