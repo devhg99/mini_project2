@@ -1,0 +1,156 @@
+/* 📄 전체 웹 페이지(body)에 적용되는 기본 스타일 */
+body {
+    font-family: 'Segoe UI', sans-serif; /* 글꼴: Segoe UI 사용, 없으면 기본 sans-serif */
+    background-color: #f4f4f4;           /* 배경색: 연한 회색 (눈에 편한 톤) */
+    margin: 0;                           /* 브라우저 기본 여백 제거 */
+    padding: 0;                          /* 안쪽 여백도 제거 */
+}
+
+/* 🔵 상단 헤더(타이틀 영역) 스타일 */
+header {
+    background-color: #007bff;           /* 배경색: 파란색 (부트스트랩 기본 파랑) */
+    color: white;                        /* 글자색: 흰색 */
+    padding: 15px;                       /* 안쪽 여백: 15px */
+    text-align: center;                  /* 텍스트 가운데 정렬 */
+}
+
+/* 🔻 하단 푸터 영역 스타일 */
+footer {
+    background-color: #f1f1f1;           /* 배경색: 아주 연한 회색 */
+    padding: 10px;                       /* 안쪽 여백 */
+    text-align: center;                  /* 가운데 정렬 */
+}
+
+/* 🧱 본문 전체를 감싸는 박스 */
+.main-container {
+    padding: 20px;                       /* 여백을 조금 줘서 여유 공간 확보 */
+}
+
+/* 📦 패널들을 가로로 나란히 배치하는 컨테이너 */
+.grid-container {
+    display: flex;                       /* Flexbox를 사용해서 가로 정렬 */
+    gap: 20px;                           /* 각 패널 사이의 간격: 20px */
+}
+
+/* ⬅️ 왼쪽 입력 영역: 좁게 */
+.left-panel {
+    background: white;
+    padding: 20px;
+    border-radius: 10px;
+    flex: 1;
+    max-width: 300px; /* 선택사항: 최대 너비 제한 */
+    box-shadow: 0 0 10px #ccc;
+}
+
+/* ⬛ 가운데 일정 영역: 넓게 */
+.center-panel {
+    background: white;
+    padding: 20px;
+    border-radius: 10px;
+    flex: 2;
+    box-shadow: 0 0 10px #ccc;
+}
+
+/* 🗺️ 오른쪽 지도 영역: 넓게 */
+.right-panel {
+    background: white;
+    padding: 20px;
+    border-radius: 10px;
+    flex: 2;
+    box-shadow: 0 0 10px #ccc;
+}
+
+/* ✍️ 입력창과 텍스트박스 공통 스타일 */
+textarea, input {
+    width: 100%;                        /* 너비를 부모 영역에 맞춤 (가로 꽉 채움) */
+    padding: 8px;                       /* 안쪽 여백 */
+    margin-top: 8px;                    /* 위 여백 */
+    margin-bottom: 12px;                /* 아래 여백 */
+    border: 1px solid #ccc;             /* 테두리 회색 */
+    border-radius: 5px;                 /* 테두리 둥글게 */
+}
+
+/* 🖱️ 버튼 공통 스타일 */
+button {
+    padding: 10px 15px;                 /* 상하 10px, 좌우 15px */
+    background-color: #007bff;          /* 파란색 배경 */
+    color: white;                       /* 글자색 흰색 */
+    border: none;                       /* 기본 테두리 제거 */
+    border-radius: 6px;                 /* 둥근 버튼 */
+    cursor: pointer;                    /* 마우스를 올리면 커서 모양 변경 */
+}
+
+/* 입력창 안의 row 정렬 (가로 2개 나란히) */
+.row {
+    display: flex;
+    justify-content: space-between;
+    gap: 16px;              /* 좌우 간격 */
+    margin-bottom: 10px;    /* 행 간 간격 */
+}
+.row .half {
+    flex: 1;
+    max-width: 200px;
+}
+
+/* label 정렬 */
+label {
+    font-weight: bold;
+    display: block;
+    margin-top: 10px;
+    margin-bottom: 10px;
+    color: #333;
+}
+
+/* select, input, textarea 공통 스타일 */
+input[type="date"]{
+    width: 100%;
+    padding: 8px;
+    font-size: 14px;
+    box-sizing: border-box; /* 내부 padding 포함한 width 계산 */
+    border: 1px solid #ccc;
+    border-radius: 6px;
+}
+input[type="text"],
+select,
+textarea {
+    width: 100%;
+    padding: 8px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    font-size: 14px;
+    background-color: #fff;
+}
+
+/* 버튼 hover 효과 */
+button:hover {
+    background-color: #0056b3;
+}
+
+/* 여행테마 토글스위치*/
+.theme-toggle-group {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: 10px;
+    margin-bottom: 20px;
+}
+
+.theme-toggle-group input[type="checkbox"] {
+    display: none; /* 진짜 체크박스는 숨김 */
+}
+
+.theme-toggle-group label {
+    padding: 8px 14px;
+    background-color: #f0f0f0;
+    border: 1px solid #ccc;
+    border-radius: 20px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: all 0.2s;
+}
+
+.theme-toggle-group input[type="checkbox"]:checked + label {
+    background-color: #007bff;
+    color: white;
+    border-color: #007bff;
+}

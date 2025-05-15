@@ -1,0 +1,168 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="grid-container">
+    <!-- 왼쪽: 사용자 입력 폼 -->
+    <div class="left-panel">
+        <form method="POST" autocomplete="off">
+            <h3>📋 여행 조건 입력</h3>
+            <!-- 여행 날짜 선택 -->
+            <label>여행 날짜</label>
+            <div class="row">
+                <div class="half">
+                    <label>시작일</label>
+                    <input type="date" name="start_date">
+                </div>
+                <div class="half">
+                    <label>종료일</label>
+                    <input type="date" name="end_date">
+                </div>
+            </div>
+
+            <!-- 동행 유형 및 인원 수 -->
+            <div class="row">
+                <div class="half">
+                    <label>누구와</label>
+                    <select name="companions">
+                        <option value="혼자">혼자</option>
+                        <option value="친구">친구</option>
+                        <option value="연인">연인</option>
+                        <option value="가족">가족</option>
+                        <option value="기타">기타</option>
+                    </select>
+                </div>
+                <div class="half">
+                    <label>총 인원수</label>
+                    <select name="people_count">
+                        {% for i in range(1, 11) %}
+                        <option value="{{ i }}">{{ i }}명</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+            <!-- 여행 장소 입력 -->
+            <label>여행 장소</label>
+            <input type="text" name="location" placeholder="예: 경주, 부산">
+            <!-- 테마 체크박스 그룹 -->
+            <label>여행 테마</label>
+            <div class="theme-toggle-group">
+                <input type="checkbox" id="theme1" name="theme" value="맛집">
+                <label for="theme1">맛집</label>
+
+                <input type="checkbox" id="theme2" name="theme" value="카페">
+                <label for="theme2">카페</label>
+
+                <input type="checkbox" id="theme3" name="theme" value="자연경관">
+                <label for="theme3">자연경관</label>
+
+                <input type="checkbox" id="theme4" name="theme" value="역사탐방">
+                <label for="theme4">역사탐방</label>
+
+                <input type="checkbox" id="theme5" name="theme" value="축제/이벤트">
+                <label for="theme5">축제/이벤트</label>
+
+                <input type="checkbox" id="theme6" name="theme" value="쇼핑">
+                <label for="theme6">쇼핑</label>
+            </div>
+
+            <!-- 프롬프트 -->
+            <label>추가 조건을 작성해 주세요</label>
+            <textarea name="user_prompt" rows="4" placeholder="예: 첫날은 동궁과월지를 꼭 넣어주세세요."></textarea>
+
+            <button type="submit">일정 생성</button>
+        </form>
+    </div>
+
+    <!-- 중앙: GPT 생성 일정 출력 -->
+    {% if result %}
+    <div class="center-panel">
+        <h3>📅 여행 일정</h3>
+        <div class="itinerary-box">
+            {{ result | safe }} <!-- HTML로 변환된 일정 마크다운 출력 -->
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- 오른쪽: 카카오 지도 -->
+    <div class="right-panel">
+        <h3>🗺️ 지도</h3>
+        <div id="map" style="width: 100%; height: 400px;"></div>
+    </div>
+</div>
+
+<!-- 장소 링크 스타일 -->
+<style>
+.place-link {
+    color: #007bff;            /* 파란색 링크 */
+    cursor: pointer;
+    text-decoration: underline;
+}
+.place-link:hover {
+    background-color: #eaf4ff; /* 호버 시 배경 */
+}
+</style>
+
+<!-- Kakao Maps JavaScript SDK 로드 -->
+<script src="https://dapi.kakao.com/v2/maps/sdk.js?appkey={{ kakao_key }}&autoload=false"></script>
+<script>
+// SDK 로드 후 실행
+kakao.maps.load(function () {
+    // 현재 열린 InfoWindow 저장용 변수
+    let currentInfoWindow = null;
+
+    const mapContainer = document.getElementById('map');
+    // 초기 지도 중심 좌표
+    const center = new kakao.maps.LatLng({{ center_lat }}, {{ center_lng }});
+    const map = new kakao.maps.Map(mapContainer, { center: center, level: 6 });
+
+    // Flask에서 전달한 마커 데이터
+    const markerData = {{ markers | tojson | safe }};
+    const markerDict = {};
+
+    // 각 마커 생성
+    markerData.forEach(m => {
+        const pos = new kakao.maps.LatLng(m.lat, m.lng);
+        const marker = new kakao.maps.Marker({ map, position: pos });
+        // InfoWindow 내용: 날짜, 시간, 설명 포함
+        const info = new kakao.maps.InfoWindow({
+            content: `
+                <div style="padding:6px 10px; font-size:13px;">
+                    <b>${m.day} ${m.time}</b><br>
+                    📍 <b>${m.name}</b><br>
+                    📝 ${m.desc}
+                </div>`
+        });
+        // 마커 클릭 시 InfoWindow 열기
+        kakao.maps.event.addListener(marker, 'click', () =>{
+            // 이전 InfoWindow 닫기
+            if (currentInfoWindow) {
+                currentInfoWindow.close();
+            }
+            // 새 InfoWindow 열기 & 저장
+            info.open(map, marker);
+            currentInfoWindow = info;
+        });
+
+        markerDict[m.name] = { marker, info, pos };
+    });
+    // 일정 내 장소 클릭 시 → 지도 이동 + InfoWindow 표시
+    document.querySelectorAll('.place-link').forEach(el => {
+        el.addEventListener('click', () => {
+            const name = el.dataset.name;
+            const data = markerDict[name];
+            if (!data) return;
+
+            // 이전 InfoWindow 닫기
+            if (currentInfoWindow) {
+                currentInfoWindow.close();
+            }
+            // 지도 센터 이동 + 새 InfoWindow 열기 & 저장
+            map.setCenter(data.pos);
+            data.info.open(map, data.marker);
+            currentInfoWindow = data.info;
+        });
+    });
+});
+</script>
+
+{% endblock %}

@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>{% block title %}AI 여행 일정 생성기{% endblock %}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<script type="text/javascript" src="//dapi.kakao.com/v2/maps/sdk.js?appkey=YOUR_KAKAO_API_KEY"></script>
+
+<body>
+    <header>
+        <h1>🧳 AI 여행 일정 생성기</h1>
+    </header>
+
+    <div class="main-container">
+        {% block content %}{% endblock %}
+    </div>
+
+    <footer>
+        <p>©여행GPT</p>
+    </footer>
+</body>
+</html>
