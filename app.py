@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request # Flask 웹 서버
+from flask import Flask, render_template, request, redirect, url_for # Flask 웹 서버
 import os
 import re
 import requests                 # Kakao API 호출을 위한 HTTP 클라이언트트
@@ -89,6 +89,24 @@ def extract_schedule_entries(text: str) -> list:
                 })
     return schedule
 
+# 5.15 15시 신규함수
+def search_category(category_code: str, region: str, size=15) -> list:
+    """
+    카카오 로컬 카테고리 검색 API 호출
+    category_code: 'CE7'(카페), 'FD6'(음식점), 'AT4'(관광지) 등
+    region: 검색할 지역 키워드
+    """
+    REST_KEY = os.environ["KAKAO_REST_API_KEY"]
+    url = "https://dapi.kakao.com/v2/local/search/category.json"
+    headers = {"Authorization": f"KakaoAK {REST_KEY}"}
+    params = {
+        "category_group_code": category_code,
+        "query": region,
+        "size": size
+    }
+    res = requests.get(url, headers=headers, params=params).json()
+    return res.get("documents", [])
+
 @app.route("/", methods=["GET", "POST"])
 def index():
     # 렌더링 변수 초기화
@@ -98,14 +116,15 @@ def index():
 
     if request.method == "POST":
         # 1) 사용자 입력 수집
-        start_date = request.form.get("start_date")
-        end_date = request.form.get("end_date")
-        companions = request.form.get("companions")
-        people_count = request.form.get("people_count")
-        theme = request.form.getlist("theme")
-        theme_str = ", ".join(theme)
-        user_prompt = request.form.get("user_prompt")
-        location = request.form.get("location")
+        start_date     = request.form.get("start_date")     # 시작일
+        end_date       = request.form.get("end_date")       # 종료일
+        companions     = request.form.get("companions")     # 누구와
+        people_count   = request.form.get("people_count")   # 인원수
+        theme          = request.form.getlist("theme")      # 여행테마
+        theme_str      = ", ".join(theme)
+        user_prompt    = request.form.get("user_prompt")    # 프럼프트
+        location       = request.form.get("location")
+        transport_mode = request.form.get("transport_mode") # 교통수단
         
         # 2) 입력된 장소로 지도 중심 좌표 업데이트
         coords = get_kakao_coords(location)
@@ -117,19 +136,22 @@ def index():
         여행 날짜: {start_date} ~ {end_date}
         동행: {companions}, 총 인원: {people_count}명
         여행지: {location}, 테마: {theme_str}
+        교통수단: {transport_mode}
         추가 조건: {user_prompt}
 
         **출력 형식**
         - 각 일정 항목은 다음처럼 작성해주세요.
         1일차:
-        09:00~10:00: \"경주 보문호\"
-        • 보문호 주변 자연경관 산책을 해보세요.
-        10:30~12:00: \"불국사\"
-        • UNESCO 세계문화유산에 등록된 불국사 관람 후 주변 자연경관을 한번 감상해보세요.
-        14:00~16:00: \"석굴암\"
-        • 불국사에서 가까운 석굴암에서 역사와 자연을 즐겨보세요.
-        - 각 일정에 설명을 전문 여행 일정 플래너처럼 잘 짜주세요.
-        - 각 일정에 따라 정해진 장소와 다음 시간대에 정해진 장소와 거리가 멀어지면 이동이 어려우니 너무 멀지않은곳으로 추천해주세요. 
+        09:00~10:00: \"해운대 해수욕장\"
+        • 해운대의 상징인 해변에서 기분 좋은 아침을 맞이하세요. 바다의 파도 소리와 함께 상쾌한 자연경관을 즐길 수 있습니다.
+        10:30~12:00: \"더베이101\"
+        • 해운대 여러 카페 중 하나인 더베이101에서 커피를 마시며 해변의 풍경을 감상할 수 있습니다. 이곳은 해운대의 아름다운 바다를 볼 수 있는 전망이 일품입니다.
+        14:00~16:00: \"동백섬\"
+        •  동백섬으로 이동해 짧은 산책을 즐겨보세요. 이곳은 다양한 식물과 함께 한국 전통의 "동백꽃"을 즐길 수 있는 명소입니다. 아름다운 조망도 놓치지 마세요.
+        - 각 일정에 설명을 전문 여행 일정 플래너처럼 성의있게 정성껏 짜주세요(설명에는 장소가 안들어가도 됩니다).
+        - 각 일정에 따라 정해진 장소와 다음 시간대에 정해진 장소와 거리가 멀어지면 이동이 어려우니 너무 멀지않은곳으로 추천해주세요.
+        - 교통수단에 따라 일정을 조율해주세요.(예를들어 자동차를타면 이동동선이 멀어져도 괜찮을것이고, 도보같은경우 근방으로 잡아야합니다)
+        - 가게(음식점, 카페)나 관광지같은경우 영업시간, 입장료, 대표메뉴 등등 추천해주시면 좋을것같습니다.
         - 시간 앞에 적힌 장소명은 반드시 큰따옴표(\"\")로 묶어주세요.
         - 가능하면 위 형식을 **Markdown** 스타일로 유지해주세요.
         """
@@ -145,7 +167,7 @@ def index():
         # 파싱: 일정 데이터와 장소 링크 변환
         schedule_data = extract_schedule_entries(raw_result)
 
-        # 마커용 장소 추출 및 좌표 계산
+        # 6) 마커용 장소 추출 및 좌표 계산
         for entry in schedule_data:
             coord = get_kakao_coords(entry["place"])
             if coord:
@@ -165,6 +187,35 @@ def index():
                            markers=markers,
                            center_lat=center_lat,
                            center_lng=center_lng)
+
+# 5.15 15시 신규함수
+@app.route("/search/<category>")
+def search(category):
+    # 1) 카테고리 코드 매핑
+    code_map = {
+        "cafe":        "CE7",
+        "restaurant":  "FD6",
+        "tourism":     "AT4",
+        # 필요시 추가…
+    }
+    code = code_map.get(category)
+    if not code:
+        # 잘못된 카테고리면 메인으로 리다이렉트
+        return redirect(url_for("index"))
+
+    # 2) 지역 파라미터 읽기
+    region = request.args.get("region", "")
+
+    # 3) 카테고리 검색 API 호출
+    places = search_category(code, region)
+
+    # 4) 결과 렌더링
+    return render_template(
+        "search.html",
+        category=category,
+        region=region,
+        places=places
+    )
 
 if __name__ == "__main__":
     app.run(debug=True)
