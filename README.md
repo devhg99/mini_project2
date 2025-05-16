@@ -1,5 +1,5 @@
 # mini_project2
-# 기본 로직
+
 travelapp/
 ├── app.py
 ├── templates/
